@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AgroLink v0.2 — GPS e Pintura de Campo</title>
+<style>
+:root{--bg:#0b1220;--panel:#121c2d;--panel2:#18263b;--line:#293950;--text:#edf4fb;--muted:#9fb0c5;--green:#5bd28b;--blue:#62b7ff;--orange:#ffb45e;--red:#ff7777}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(140deg,#08101d,#101e2f 60%,#0b1725);color:var(--text);font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+header{padding:22px clamp(16px,4vw,42px);border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:12px}.logo{width:44px;height:44px;border-radius:13px;background:linear-gradient(135deg,#7ce7a3,#2b9d66);display:grid;place-items:center;color:#082117;font-size:23px;font-weight:900}
+h1{font-size:clamp(22px,3vw,31px);margin:0;letter-spacing:-.6px} .subtitle{color:var(--muted);font-size:13px}
+.pill{border:1px solid #315c49;color:#9ff0bd;background:#102a21;padding:7px 11px;border-radius:999px;font-size:12px;font-weight:700}
+main{max-width:1400px;margin:auto;padding:22px clamp(14px,3vw,32px) 34px}
+.notice{padding:12px 15px;border:1px solid #5a4b2e;background:#292317;color:#ffe0a8;border-radius:12px;margin-bottom:18px;font-size:13px}
+.layout{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(290px,.8fr);gap:18px}
+.panel{background:rgba(18,28,45,.94);border:1px solid var(--line);border-radius:18px;overflow:hidden;box-shadow:0 14px 40px #0002}
+.panelhead{padding:16px 18px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:12px}
+.panelhead h2{font-size:16px;margin:0}.panelbody{padding:17px}
+#map{width:100%;height:500px;display:block;background:#172b29}
+.mapwrap{position:relative}.mapbadge{position:absolute;top:12px;left:12px;background:#0b1724dc;border:1px solid #ffffff26;border-radius:9px;padding:7px 10px;font-size:12px;color:#d8e8f3;backdrop-filter:blur(8px)}
+.maplegend{display:flex;gap:14px;flex-wrap:wrap;padding:12px 17px;border-top:1px solid var(--line);font-size:12px;color:var(--muted)}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+button{border:1px solid #34475e;background:#203149;color:var(--text);padding:10px 12px;border-radius:10px;font-weight:700;cursor:pointer;transition:.15s;font-size:13px}
+button:hover{filter:brightness(1.15);transform:translateY(-1px)}button.primary{background:#197a4b;border-color:#2caa6b}button.blue{background:#164d79;border-color:#2779b6}button.warn{background:#55391e;border-color:#88602d}button:disabled{opacity:.45;cursor:not-allowed;transform:none}
+.status{padding:11px 12px;border-radius:11px;background:#0d1726;border:1px solid var(--line);font-size:13px;color:var(--muted);margin-bottom:14px}
+.status strong{color:var(--text)}.status.live{border-color:#2c7550;background:#10271e}.status.error{border-color:#7b3d3d;background:#2a171b}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0}
+.stat{background:#0d1726;border:1px solid var(--line);border-radius:12px;padding:12px}.stat .label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px}.stat .value{font-size:20px;font-weight:800;margin-top:5px;overflow-wrap:anywhere}
+label{display:flex;gap:9px;align-items:center;color:#d5e1ee;font-size:13px;margin:12px 0}input[type=checkbox]{accent-color:#45c77c;width:17px;height:17px}
+hr{border:0;border-top:1px solid var(--line);margin:16px 0}
+h3{font-size:13px;color:#b9c9da;text-transform:uppercase;letter-spacing:.7px;margin:0 0 10px}
+.small{font-size:12px;color:var(--muted)}.log{font:12px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;background:#08111d;border:1px solid var(--line);border-radius:10px;padding:10px;max-height:115px;overflow:auto;color:#a9c3d8;white-space:pre-wrap}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:18px}.step{padding:14px;border:1px solid var(--line);border-radius:13px;background:#101b2b}.step b{display:block;margin-bottom:5px;font-size:13px}.step span{font-size:12px;color:var(--muted)}
+footer{text-align:center;color:#71869c;font-size:12px;padding:20px}
+@media(max-width:900px){.layout{grid-template-columns:1fr}#map{height:410px}.steps{grid-template-columns:1fr}}@media(max-width:520px){#map{height:340px}.stats{grid-template-columns:1fr 1fr}.panelbody{padding:13px}}
+</style>
+</head>
+<body>
+<header>
+ <div class="brand"><div class="logo">A</div><div><h1>AgroLink <span style="color:#73e6a0">v0.2</span></h1><div class="subtitle">GPS real · Pintura de campo · Base para integração entre máquinas</div></div></div>
+ <div class="pill">PROTÓTIPO DE TESTE</div>
+</header>
+<main>
+ <div class="notice"><b>Antes de testar:</b> o GPS real exige permissão do navegador e normalmente HTTPS ou localhost. Este protótipo ainda não lê diretamente os monitores Case IH/New Holland e não sincroniza automaticamente entre aparelhos.</div>
+ <div class="layout">
+  <section class="panel">
+   <div class="panelhead"><h2>Mapa operacional</h2><span class="small" id="mapMode">Modo de demonstração</span></div>
+   <div class="mapwrap"><canvas id="map" aria-label="Mapa de demonstração do talhão"></canvas><div class="mapbadge" id="gpsBadge">● GPS não iniciado</div></div>
+   <div class="maplegend"><span><i class="dot" style="background:#61d889"></i>Faixa pintada</span><span><i class="dot" style="background:#ffb45e"></i>Trajeto da máquina</span><span><i class="dot" style="background:#62b7ff"></i>Posição GPS</span><span><i class="dot" style="background:#eaf3c2"></i>Limite do talhão</span></div>
+  </section>
+  <aside class="panel">
+   <div class="panelhead"><h2>Controles e telemetria</h2><span class="small">Local</span></div>
+   <div class="panelbody">
+    <div class="status" id="status"><strong>Pronto para iniciar.</strong><br>Escolha GPS real ou demonstração.</div>
+    <div class="actions">
+     <button class="primary" id="gpsBtn">Ativar GPS real</button>
+     <button class="blue" id="demoBtn">Iniciar demonstração</button>
+    </div>
+    <div class="stats">
+     <div class="stat"><div class="label">Latitude</div><div class="value" id="lat">—</div></div>
+     <div class="stat"><div class="label">Longitude</div><div class="value" id="lon">—</div></div>
+     <div class="stat"><div class="label">Precisão GPS</div><div class="value" id="accuracy">—</div></div>
+     <div class="stat"><div class="label">Distância estimada</div><div class="value" id="distance">0 m</div></div>
+     <div class="stat"><div class="label">Pontos capturados</div><div class="value" id="points">0</div></div>
+     <div class="stat"><div class="label">Área pintada*</div><div class="value" id="area">0,00 ha</div></div>
+    </div>
+    <label><input type="checkbox" id="paint" checked> Registrar pintura enquanto a posição se move</label>
+    <label><input type="checkbox" id="follow" checked> Acompanhar a posição no mapa</label>
+    <div class="actions">
+     <button id="pauseBtn">Pausar rastreamento</button>
+     <button class="warn" id="clearBtn">Limpar trajeto</button>
+    </div>
+    <hr>
+    <h3>Registro de eventos</h3><div class="log" id="log">[AgroLink] Protótipo v0.2 carregado.\n[AgroLink] Aguardando autorização de GPS.</div>
+    <p class="small">*Área é uma estimativa visual do protótipo, não um cálculo agronômico certificado. Não use para aplicação, direção automática ou decisões operacionais sem validação.</p>
+   </div>
+  </aside>
+ </div>
+ <div class="steps">
+  <div class="step"><b>Etapa 1 — GPS</b><span>Testar permissão e localização real no celular ou tablet.</span></div>
+  <div class="step"><b>Etapa 2 — Pintura</b><span>Validar registro de posições e desenho das passadas no mapa.</span></div>
+  <div class="step"><b>Etapa 3 — Sincronização</b><span>Adicionar servidor compartilhado para enviar dados entre dois dispositivos.</span></div>
+ </div>
+</main>
+<footer>AgroLink v0.2 · Protótipo experimental · Nenhuma conexão com máquinas reais</footer>
+<script>
+const canvas=document.getElementById('map'),ctx=canvas.getContext('2d');
+const $=id=>document.getElementById(id);
+let points=[],watchId=null,simTimer=null,sim=false,paused=false,last=null,totalM=0,simT=0,center={x:.5,y:.5},trail=[],painted=[];
+function log(s){let el=$('log');el.textContent+=`\\n[${new Date().toLocaleTimeString('pt-BR')}] ${s}`;el.scrollTop=el.scrollHeight}
+function resize(){const r=canvas.getBoundingClientRect(),d=window.devicePixelRatio||1;canvas.width=Math.max(1,Math.floor(r.width*d));canvas.height=Math.max(1,Math.floor(r.height*d));ctx.setTransform(d,0,0,d,0,0);draw()}
+function draw(){
+ const w=canvas.clientWidth,h=canvas.clientHeight;ctx.clearRect(0,0,w,h);
+ ctx.fillStyle='#19352f';ctx.fillRect(0,0,w,h);
+ // subtle field texture
+ for(let x=-h;x<w+h;x+=28){ctx.strokeStyle='#2b4a3d';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x+h,h);ctx.stroke()}
+ // field boundary
+ const bx=w*.09,by=h*.10,bw=w*.82,bh=h*.80;
+ ctx.save();ctx.beginPath();ctx.moveTo(bx+25,by);ctx.lineTo(bx+bw-15,by+10);ctx.lineTo(bx+bw,by+bh-30);ctx.lineTo(bx+30,by+bh);ctx.closePath();ctx.strokeStyle='#e6f2b9';ctx.lineWidth=2;ctx.setLineDash([7,5]);ctx.stroke();ctx.restore();
+ // illustrative rows
+ for(let i=1;i<9;i++){let y=by+bh*i/9;ctx.strokeStyle='#355b45';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(bx+8,y);ctx.lineTo(bx+bw-8,y+((i%2)*3));ctx.stroke()}
+ // painted segments
+ for(let i=1;i<painted.length;i++){const a=painted[i-1],b=painted[i];ctx.strokeStyle='#62d88a';ctx.lineWidth=13;ctx.lineCap='round';ctx.globalAlpha=.65;ctx.beginPath();ctx.moveTo(a.x*w,a.y*h);ctx.lineTo(b.x*w,b.y*h);ctx.stroke();ctx.globalAlpha=1}
+ // trajectory
+ if(trail.length>1){ctx.strokeStyle='#ffb45e';ctx.lineWidth=2.5;ctx.beginPath();trail.forEach((p,i)=>i?ctx.lineTo(p.x*w,p.y*h):ctx.moveTo(p.x*w,p.y*h));ctx.stroke()}
+ if(trail.length){let p=trail[trail.length-1];ctx.fillStyle='#62b7ff';ctx.beginPath();ctx.arc(p.x*w,p.y*h,7,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#eaf7ff';ctx.lineWidth=2;ctx.stroke();ctx.beginPath();ctx.arc(p.x*w,p.y*h,13,0,Math.PI*2);ctx.strokeStyle='#62b7ff88';ctx.stroke()}
+ // compass
+ ctx.fillStyle='#dce9e5';ctx.font='bold 12px system-ui';ctx.fillText('N ↑',w-39,25);
+}
+function setStatus(html,kind=''){ $('status').className='status '+kind;$('status').innerHTML=html}
+function fmt(n){return Number.isFinite(n)?n.toFixed(6):'—'}
+function dist(a,b){const R=6371000,rad=x=>x*Math.PI/180,dLat=rad(b.latitude-a.latitude),dLon=rad(b.longitude-a.longitude),q=Math.sin(dLat/2)**2+Math.cos(rad(a.latitude))*Math.cos(rad(b.latitude))*Math.sin(dLon/2)**2;return 2*R*Math.asin(Math.sqrt(q))}
+function addPosition(pos,isDemo=false){
+ const c=isDemo?pos:{latitude:pos.coords.latitude,longitude:pos.coords.longitude,accuracy:pos.coords.accuracy};
+ $('lat').textContent=fmt(c.latitude);$('lon').textContent=fmt(c.longitude);$('accuracy').textContent=isDemo?'simulada':`${Math.round(c.accuracy)} m`;
+ if(last&&!isDemo){let d=dist(last,c);if(d<100)totalM+=d}
+ last={latitude:c.latitude,longitude:c.longitude};
+ // local illustrative projection: relative movement; actual lat/lon shown above
+ let p;
+ if(isDemo){p={x:.18+(.64*(.5+.43*Math.sin(simT*.35))),y:.18+(.64*(.5+.42*Math.sin(simT*.72)))}}
+ else{
+   if(!window.gpsOrigin)window.gpsOrigin={latitude:c.latitude,longitude:c.longitude};
+   const dy=(c.latitude-window.gpsOrigin.latitude)*111320,dx=(c.longitude-window.gpsOrigin.longitude)*111320*Math.cos(c.latitude*Math.PI/180);
+   p={x:Math.max(.08,Math.min(.92,.5+dx/120)),y:Math.max(.08,Math.min(.92,.5-dy/120))};
+ }
+ trail.push(p);if(trail.length>600)trail.shift();
+ if($('paint').checked){painted.push(p);if(painted.length>600)painted.shift()}
+ $('points').textContent=trail.length;$('distance').textContent=totalM>=1000?(totalM/1000).toFixed(2)+' km':Math.round(totalM)+' m';
+ $('area').textContent=(painted.length*0.0008).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})+' ha';
+ $('gpsBadge').textContent=isDemo?'● GPS simulado':'● Posição GPS recebida';$('mapMode').textContent=isDemo?'Demonstração':'GPS real';
+ draw();
+}
+function startGPS(){
+ stopAll();sim=false;paused=false;$('pauseBtn').textContent='Pausar rastreamento';
+ if(!navigator.geolocation){setStatus('<strong>GPS indisponível.</strong><br>Este navegador não oferece geolocalização.','error');return}
+ if(!window.isSecureContext){setStatus('<strong>Contexto não seguro.</strong><br>Abra o protótipo em HTTPS ou localhost para solicitar GPS.','error');log('GPS bloqueado: use HTTPS ou localhost.');return}
+ setStatus('<strong>Aguardando GPS…</strong><br>Permita o acesso à localização quando o navegador perguntar.');
+ $('gpsBtn').disabled=true;
+ watchId=navigator.geolocation.watchPosition(pos=>{if(paused)return;addPosition(pos,false);setStatus('<strong>GPS ativo.</strong><br>Localização recebida do dispositivo.','live');$('gpsBtn').disabled=false},err=>{const msg={1:'Permissão de localização negada.',2:'Sinal de localização indisponível.',3:'Tempo esgotado ao buscar GPS.'}[err.code]||err.message;setStatus('<strong>Não foi possível obter GPS.</strong><br>'+msg,'error');log(msg);$('gpsBtn').disabled=false},{enableHighAccuracy:true,maximumAge:1000,timeout:15000});
+ log('Solicitação de GPS real iniciada.');
+}
+function startDemo(){stopAll();sim=true;paused=false;simT=0;last=null;setStatus('<strong>Demonstração ativa.</strong><br>As coordenadas e o trajeto são simulados.','live');$('pauseBtn').textContent='Pausar rastreamento';$('gpsBadge').textContent='● GPS simulado';$('mapMode').textContent='Demonstração';simTimer=setInterval(()=>{if(!paused){simT++;addPosition({latitude:-29.5,longitude:-51.8,accuracy:5},true)}},700);log('Modo de demonstração iniciado; não representa dados reais.')}
+function stopAll(){if(watchId!==null){navigator.geolocation.clearWatch(watchId);watchId=null}if(simTimer){clearInterval(simTimer);simTimer=null}sim=false;$('gpsBtn').disabled=false}
+$('gpsBtn').onclick=startGPS;$('demoBtn').onclick=startDemo;
+$('pauseBtn').onclick=()=>{paused=!paused;$('pauseBtn').textContent=paused?'Retomar rastreamento':'Pausar rastreamento';if(paused){setStatus('<strong>Rastreamento pausado.</strong><br>Os pontos já registrados foram mantidos.')}else setStatus(`<strong>${sim?'Demonstração':'GPS'} retomado.</strong><br>Captura de posições liberada.`,'live');log(paused?'Rastreamento pausado.':'Rastreamento retomado.')};
+$('clearBtn').onclick=()=>{trail=[];painted=[];totalM=0;last=null;window.gpsOrigin=null;$('points').textContent='0';$('distance').textContent='0 m';$('area').textContent='0,00 ha';draw();log('Trajeto e pintura limpos.')};
+window.addEventListener('resize',resize);resize();
+</script>
+</body>
+</html>
